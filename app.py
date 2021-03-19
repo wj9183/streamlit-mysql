@@ -1,69 +1,101 @@
 import streamlit as st
-import mysql.connector #조금 전에 다운로드 받은 라이브러리.
-from mysql.connector import Error #데이터베이스 관련한 에러는 얘가 잡아줄 것임. 데이터베이스 연결이 안되거나 쿼리를 이상하게 쓰거나 했을 때 등의 여러가지 에러
+import mysql.connector
+from mysql.connector import Error
+from datetime import datetime, date, time
+
 
 def main():
-    try :      #트라이문 안에서 에러가 생기면 에러 생겼을 때 어떻게 하겠다고 처리해줄 수가 있다. 예를 들어 쿼리문을 잘못써서 에러가 나면. 한참 밑에 try랑 동등한 레벨의 except
-        #1. 커넥터로부터 커넥션을 받는다.
-        connection = mysql.connector.connect(        # 이 함수를 가장 먼저 호출하고, 괄호 안에 정보를 넣어줘야한다 안그럼 개나소나 다 연결하니까.
-            host = 'database-1.czhazxqfdq7r.us-east-2.rds.amazonaws.com',       #이 주소?를 엔드포인트라고한다. database-1.czhazxqfdq7r.us-east-2.rds.amazonaws.com
-            database = 'yhdb',
-            user = 'streamlit',
-            password = 'yh1234' #원래 이런 정보들 여기에 안쓴다.
-        )
-        print(connection)
+    # title = st.text_input('책 제목 입력')
+    # author_fname = st.text_input('이름 입력')
+    # author_lname = st.text_input('성 입력')
+    # released_year = st.number_input('년도 입력')
+    # stock_quantity = st.number_input('수량 입력')
+    # pages = st.number_input('페이지입력')
 
-        if connection.is_connected():               #연결되어있니?      #이거 다 마이에스큐엘 커넥터 라이브러리에서 주는 거임.
-            print('연결 됐을 때 디버깅')                #연결 됐는지 확인하고 싶으면 절차마다 찍어봐라. 이런게 디버깅이다.
-            db_info = connection.get_server_info()   #커넥션 맺은 서버의 정보를 가져와라ㅏ. 서버 버전이 들어있다.
-            print("MySQL server version : ", db_info)
+    # name = st.text_input('이름 입력')
+    # birth_date = st.date_input('생년월일')
+    # birth_time = st.time_input('시간입력')
+    
+    # birth_dt = datetime.combine(birth_date, birth_time)
+    
+    # print(birth_date)
+    # print(birth_time)
+    # print(birth_dt)
 
-            # 2. 커서를 가져온다.
-            cursor = connection.cursor()
+    st.subheader('몇년도 이후, 몇페이지 이상되는 책을 검색하고 싶으십니까?')
+    released_year = st.number_input('년도 입력', min_value=1800, max_value=2050)
+    pages = st.number_input('페이지수 입력', min_value=10)
 
-            print('커서 가져오고 나서 디버깅')
+    order = 'asc'
+    if st.checkbox("오름차순 / 내림차순") :
+        order = 'desc'
+    
+    if st.button('조회') :
 
-            # 3. 이제 우리가 원하는 거 실행 가능하다.
-            # cursor.execute('select database();')    # 괄호 안에 쿼리문을 써준다. 쿼리를 실행하라는 뜻.
-
-            #이제 데이터 인서트를 해본다.
-            title = '무서운 책'
-            author_fname = '나나'
-            author_lname = '바'
-            released_year = 2020
-            stock_quantity = 50
-            pages = 361
-
-            query = """ insert into books (title, author_fname,
-					author_lname, released_year, stock_quantity, pages)
-	                values (%s, %s, %s, %s, %s, %s);""" 
-                                                                                                    # %s는 숫자인지 소문자인지 상관없이 알아서 넣어준다.
-            record = (title, author_fname, author_lname, released_year, stock_quantity, pages)      #리스트 말고 튜플이여야 한다.
+        try :
+            connection = mysql.connector.connect(        # 이 함수를 가장 먼저 호출하고, 괄호 안에 정보를 넣어줘야한다 안그럼 개나소나 다 연결하니까.
+                host = 'database-1.czhazxqfdq7r.us-east-2.rds.amazonaws.com',  
+                database = 'yhdb',
+                user = 'streamlit',
+                password = 'yh1234' #원래 이런 정보들 여기에 안쓴다.
+            )
             
-            cursor.execute(query, record)
-            connection.commit()    #커밋해라 데이터베이스에 영구 저장해라
-            print("{}개 적용됨".format(cursor.rowcount))
-            # 4. 위의 실행한 결과는 커서에 들어있다. 실행후 커서에서 결과를 빼낸다.
-            # record = cursor.fetchone() 커밋하는 건 결과를 셀렉트해오는 게 아니기 때문에 이 줄이 필요 없다.
-            # print('Connected to db : ', record) # db이름 찍어보기
+            if connection.is_connected() :
+                db_info = connection.get_server_info()
+                print("MySQL server version : ", db_info)
 
-            ####순서####    연결하고 커서 가져오고 원하는 sql문 실행시키고 실행한 결과를 화면에 보여주면 된다.
-    except Error as e :
-        print('DB 관련 에러 발생', e)
-    finally :    #트라이에 걸리든 익셉트에 걸리든 마지막엔...
-        #5. 모든 데이터베이스 실행 명령을 전부 끝냈으면,
-        #   커서와 커넥션을 모두 닫아준다.
-        cursor.close()      #커서부터 연결을 끊어줘야함. 커넥션부터 끊으면 다른 거 못한다.
-        connection.close()
-        print("MySQL 커넥션 종료")   #커넥션을 다시 얻어오기 전까지 이제 실행 못하게 된다.
+                # 2. 커서를 가져온다.
+                cursor = connection.cursor()
 
+                # 3. 우리가 원하는거 실행 가능.            
+                query = """select * from books;"""
+                
+                cursor.execute(query)
 
+                
+                # 4. 실행 후 커서에서 결과를 빼낸다. 
+                
+                results = cursor.fetchall()
 
-if __name__ == '__main__':
+                
+                print(results)
+
+                # for data in results :
+                #     print(data[1] , data[4])
+
+                
+                cursor = connection.cursor(dictionary= True)
+
+                if order == 'asc' :
+                    query = """ select title, released_year, pages
+                            from books
+                            where released_year > %s and pages > %s
+                            order by released_year asc ; """
+                else :
+                    query = """ select title, released_year, pages
+                            from books
+                            where released_year > %s and pages > %s
+                            order by released_year desc ; """            # %s는 데이터를 가져와서 넣는 거다. 근데 desc는 그냥 문자열이다. 그래서 %s로 간단하게 되지 않는다.
+                         
+                param = (released_year, pages)
+
+                cursor.execute(query, param)
+                results = cursor.fetchall()
+                
+                for data in results :
+                    print(data['title'], data['released_year'])
+                    st.write(data)
+
+        
+        except Error as e :
+            print('디비 관련 에러 발생', e)
+        
+        finally :
+            # 5. 모든 데이터베이스 실행 명령을 전부 끝냈으면,
+            #    커서와 커넥션을 모두 닫아준다.
+            cursor.close()
+            connection.close()
+            print("MySQL 커넥션 종료")
+
+if __name__ == '__main__' :    
     main()
-
-
-
-#파이썬에서 마이에스큐엘 접속할 수 있는 라이브러리들이 몇가지 있다. 그것 중 하나를 깔아야한다.
-
-#디버깅은 프린트문으로 한다.
