@@ -1,7 +1,7 @@
 import streamlit as st
 import mysql.connector
 from mysql.connector import Error
-from select import select
+from my_sql_select import my_sql_select
 
 
 
@@ -13,5 +13,10 @@ def main():
 
 
     if choice == 'Select':
-        select()
+        my_sql_select()
+
+
+
+if __name__ == '__main__':
+    main()
        
