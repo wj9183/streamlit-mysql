@@ -29,9 +29,12 @@ def main():
                 cursor.execute(call_columns_query)
                 results = cursor.fetchall()
                 print(results)
-                # column_list = []
-                # for column in results :
-                #     print(columns)
+                column_list = []
+                for index_number in range(len(results[0])) :
+                    column_list.append(results[index_number][0])
+                    print(results[index_number][0])
+
+                st.multiselect('컬럼을 고르세요.', column_list)
 
                 # st.multiselect()
 
